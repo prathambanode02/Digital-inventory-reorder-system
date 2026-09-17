@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Inventory Reorder Alert System</title>
+  <style>
+:root{
+  --navy:#0f172a;--blue:#2563eb;--indigo:#4f46e5;--cyan:#0891b2;
+  --green:#059669;--amber:#d97706;--red:#dc2626;--purple:#7c3aed;
+  --bg:#eef3f9;--card:#ffffff;--text:#172033;--muted:#64748b;
+  --border:#e2e8f0;--shadow:0 10px 30px rgba(15,23,42,.08);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;
+  background:linear-gradient(135deg,#eef4ff 0%,#f8fafc 50%,#ecfeff 100%);
+  color:var(--text);min-height:100vh
+}
+.app{max-width:1400px;margin:auto;padding:28px}
+header{
+  position:relative;overflow:hidden;
+  background:linear-gradient(120deg,#0f172a,#1e3a8a 55%,#4338ca);
+  color:#fff;padding:30px 34px;border-radius:20px;margin-bottom:24px;
+  box-shadow:0 16px 40px rgba(30,58,138,.22)
+}
+header:after{
+  content:"";position:absolute;width:260px;height:260px;border-radius:50%;
+  background:rgba(56,189,248,.16);right:-70px;top:-100px
+}
+header h1{margin:0 0 8px;font-size:30px;letter-spacing:-.5px;position:relative;z-index:1}
+header p{margin:0;color:#dbeafe;font-size:15px;position:relative;z-index:1}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.stat{
+  background:rgba(255,255,255,.95);border:1px solid var(--border);
+  border-radius:15px;padding:18px 20px;box-shadow:var(--shadow);
+  border-top:4px solid var(--blue);transition:.2s
+}
+.stat:nth-child(2){border-top-color:var(--amber)}
+.stat:nth-child(3){border-top-color:var(--red)}
+.stat:nth-child(4){border-top-color:var(--green)}
+.stat:hover{transform:translateY(-2px)}
+.stat small{color:var(--muted);font-weight:600}
+.stat strong{display:block;font-size:29px;margin-top:6px;color:var(--navy)}
+.grid{display:grid;grid-template-columns:360px 1fr;gap:22px}
+.card{
+  background:rgba(255,255,255,.97);border:1px solid var(--border);
+  border-radius:17px;padding:23px;box-shadow:var(--shadow)
+}
+.card h2{
+  margin:0 0 20px;font-size:20px;color:var(--navy);
+  display:flex;align-items:center;gap:9px
+}
+.card h2:before{
+  content:"";width:5px;height:23px;border-radius:5px;
+  background:linear-gradient(#2563eb,#7c3aed);display:inline-block
+}
+label{display:block;font-weight:650;margin:13px 0 6px;color:#334155;font-size:13px}
+input{
+  width:100%;padding:11px 12px;border:1px solid #cbd5e1;border-radius:9px;
+  font-size:14px;background:#f8fafc;outline:none;transition:.2s
+}
+input:focus{
+  border-color:var(--blue);background:#fff;
+  box-shadow:0 0 0 3px rgba(37,99,235,.12)
+}
+button{
+  border:0;border-radius:9px;padding:10px 14px;font-weight:700;
+  cursor:pointer;transition:.2s
+}
+.primary{
+  background:linear-gradient(135deg,#2563eb,#4f46e5);color:white;
+  width:100%;margin-top:17px;box-shadow:0 6px 14px rgba(37,99,235,.22)
+}
+.primary:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(37,99,235,.3)}
+.alert{
+  padding:12px 15px;border-radius:10px;margin-bottom:10px;
+  font-weight:650;border:1px solid transparent;font-size:13px
+}
+.danger{background:#fff1f2;color:#be123c;border-color:#fecdd3}
+.warning{background:#fffbeb;color:#b45309;border-color:#fde68a}
+.ok{background:#ecfdf5;color:#047857;border-color:#a7f3d0}
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:11px}
+table{width:100%;border-collapse:collapse;background:#fff}
+th,td{text-align:left;padding:13px;border-bottom:1px solid #edf2f7;white-space:nowrap}
+th{
+  background:#f1f5f9;font-size:11px;text-transform:uppercase;
+  letter-spacing:.5px;color:#475569
+}
+tbody tr{transition:.15s}
+tbody tr:hover{background:#f8fbff}
+tbody tr:last-child td{border-bottom:0}
+.badge{
+  display:inline-flex;padding:6px 10px;border-radius:999px;
+  font-size:11px;font-weight:750
+}
+.badge-danger{background:#ffe4e6;color:#be123c}
+.badge-warning{background:#fef3c7;color:#a16207}
+.badge-ok{background:#d1fae5;color:#047857}
+.actions button{padding:7px 10px;background:#e2e8f0;color:#334155;margin-right:4px}
+.actions button:hover{background:#cbd5e1}
+.actions .order{background:#2563eb;color:white}
+.actions .order:hover{background:#1d4ed8}
+.empty{text-align:center;color:#64748b;padding:35px}
+@media(max-width:900px){
+  .grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:520px){
+  .app{padding:14px}header{padding:24px 20px}header h1{font-size:23px}
+  .stats{grid-template-columns:1fr 1fr;gap:10px}.stat{padding:14px}
+  .stat strong{font-size:23px}.card{padding:17px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Digital Inventory Reorder Alert System</h1>
+    <p>Monitor stock levels, calculate reorder points, and generate purchase alerts automatically.</p>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><small>Total Products</small><strong id="totalProducts">0</strong></div>
+    <div class="stat"><small>Reorder Alerts</small><strong id="alertCount">0</strong></div>
+    <div class="stat"><small>Critical Stock</small><strong id="criticalCount">0</strong></div>
+    <div class="stat"><small>Total Units</small><strong id="totalUnits">0</strong></div>
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Add Inventory Item</h2>
+      <form id="inventoryForm">
+        <label>Product Name</label>
+        <input id="name" required placeholder="e.g. Arduino UNO">
+
+        <label>SKU / Product ID</label>
+        <input id="sku" required placeholder="e.g. ARD-001">
+
+        <label>Current Stock</label>
+        <input id="stock" type="number" min="0" required>
+
+        <label>Daily Demand</label>
+        <input id="demand" type="number" min="0" step="0.1" required>
+
+        <label>Lead Time (days)</label>
+        <input id="leadTime" type="number" min="0" step="0.1" required>
+
+        <label>Safety Stock</label>
+        <input id="safetyStock" type="number" min="0" required>
+
+        <button class="primary" type="submit">+ Add Product</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Inventory Dashboard</h2>
+      <div id="alerts"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th><th>SKU</th><th>Stock</th><th>Reorder Point</th>
+              <th>Days Left</th><th>Status</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="inventoryBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = "digitalInventoryItems";
+
+  let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [
+    {name:"Arduino UNO", sku:"ARD-001", stock:25, demand:8, leadTime:3, safetyStock:10},
+    {name:"DHT11 Sensor", sku:"DHT-011", stock:12, demand:5, leadTime:3, safetyStock:8},
+    {name:"ESP32 Module", sku:"ESP-032", stock:60, demand:6, leadTime:4, safetyStock:12}
+  ];
+
+  const $ = id => document.getElementById(id);
+
+  function reorderPoint(item){
+    return Math.ceil(item.demand * item.leadTime + item.safetyStock);
+  }
+
+  function status(item){
+    const rp = reorderPoint(item);
+    if(item.stock <= item.demand) return ["Critical","badge-danger"];
+    if(item.stock <= rp) return ["Reorder Now","badge-danger"];
+    if(item.stock <= rp * 1.25) return ["Monitor","badge-warning"];
+    return ["Healthy","badge-ok"];
+  }
+
+  function save(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
+  }
+
+  function render(){
+    const body = $("inventoryBody");
+    const alerts = $("alerts");
+    body.innerHTML = "";
+    alerts.innerHTML = "";
+
+    let alertCount=0, criticalCount=0, totalUnits=0;
+
+    inventory.forEach((item,index)=>{
+      const rp = reorderPoint(item);
+      const days = item.demand > 0 ? (item.stock/item.demand).toFixed(1) : "∞";
+      const [label, cls] = status(item);
+      totalUnits += Number(item.stock);
+
+      if(label === "Critical") criticalCount++;
+      if(label === "Critical" || label === "Reorder Now"){
+        alertCount++;
+        alerts.innerHTML += `<div class="alert ${label==="Critical"?"danger":"warning"}">
+          ⚠ ${item.name}: stock ${item.stock} is at/below reorder level ${rp}.
+        </div>`;
+      }
+
+      body.innerHTML += `
+        <tr>
+          <td><strong>${escapeHTML(item.name)}</strong></td>
+          <td>${escapeHTML(item.sku)}</td>
+          <td>${item.stock}</td>
+          <td>${rp}</td>
+          <td>${days}</td>
+          <td><span class="badge ${cls}">${label}</span></td>
+          <td class="actions">
+            <button class="order" onclick="restock(${index})">Restock</button>
+            <button onclick="removeItem(${index})">Delete</button>
+          </td>
+        </tr>`;
+    });
+
+    if(!inventory.length){
+      body.innerHTML = `<tr><td colspan="7" class="empty">No inventory items. Add a product to begin.</td></tr>`;
+    }
+
+    if(!alertCount) alerts.innerHTML = `<div class="alert ok">✓ All inventory items are above their reorder levels.</div>`;
+
+    $("totalProducts").textContent = inventory.length;
+    $("alertCount").textContent = alertCount;
+    $("criticalCount").textContent = criticalCount;
+    $("totalUnits").textContent = totalUnits;
+  }
+
+  function escapeHTML(text){
+    return String(text).replace(/[&<>"']/g,m=>({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[m]));
+  }
+
+  $("inventoryForm").addEventListener("submit", e=>{
+    e.preventDefault();
+
+    const item = {
+      name: $("name").value.trim(),
+      sku: $("sku").value.trim(),
+      stock: Number($("stock").value),
+      demand: Number($("demand").value),
+      leadTime: Number($("leadTime").value),
+      safetyStock: Number($("safetyStock").value)
+    };
+
+    inventory.push(item);
+    save();
+    render();
+    e.target.reset();
+    $("name").focus();
+  });
+
+  function restock(index){
+    const qty = Number(prompt(`Enter quantity to add for ${inventory[index].name}:`, "20"));
+    if(Number.isFinite(qty) && qty > 0){
+      inventory[index].stock += qty;
+      save();
+      render();
+    }
+  }
+
+  function removeItem(index){
+    if(confirm(`Delete ${inventory[index].name}?`)){
+      inventory.splice(index,1);
+      save();
+      render();
+    }
+  }
+
+  render();
+</script>
+</body>
+</html>
